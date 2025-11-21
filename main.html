@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini About:Blank Page Maker</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: sans-serif;
+    background-color: rgb(255,255,255);
+    position: relative;
+  }
+  .text-item {
+    position: absolute;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<h2>Mini About:Blank Page Maker</h2>
+<textarea id="code" style="width:100%;height:200px;">
+BGcolor=255,255,255
+"Hello!"[id=1]
+"World!"[id=2, down[id=1]]
+"Hi!"[id=3, down[id=2]]
+"Hello world!"[id=4, color=255,0,0]
+"[date=ukraine]"[id=5]
+"[time=ukraine]"[id=6, down[id=5]]
+"Click this!"[id=7, link=https://www.youtube.com/watch?v=dQw4w9WgXcQ]
+"Text 1"[id=8]
+"Text 2"[id=9, down[id=8]]
+"Text 3"[id=10, right[id=8]]
+</textarea>
+<br>
+<button id="run">Run Code</button>
+
+<div id="canvas" style="position:relative; width:100%; height:600px; border:2px dashed #ccc; margin-top:20px;"></div>
+
+<script>
+document.getElementById('run').addEventListener('click',()=>{
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = '';
+  const code = document.getElementById('code').value.split('\\n').map(s=>s.trim()).filter(s=>s);
+  const items = {};
+  let bg = '255,255,255';
+
+  code.forEach(line=>{
+    if(line.startsWith('BGcolor=')){
+      bg = line.replace('BGcolor=','');
+      canvas.parentElement.style.backgroundColor = `rgb(${bg})`;
+      return;
+    }
+    const textMatch = line.match(/\"(.*?)\"/);
+    const idMatch = line.match(/id=(\\d+)/);
+    if(!textMatch || !idMatch) return;
+    const text = textMatch[1];
+    const id = idMatch[1];
+    const colorMatch = line.match(/color=([0-9]+),([0-9]+),([0-9]+)/);
+    const linkMatch = line.match(/link=([^\\]]+)/);
+    const downMatch = line.match(/down\\[id=(\\d+)\\]/);
+    const rightMatch = line.match(/right\\[id=(\\d+)\\]/);
+
+    const div = document.createElement('div');
+    div.classList.add('text-item');
+    div.innerText = text;
+    div.style.color = colorMatch ? `rgb(${colorMatch[1]},${colorMatch[2]},${colorMatch[3]})` : '#000';
+    if(linkMatch){
+      const a = document.createElement('a');
+      a.href = linkMatch[1];
+      a.target='_blank';
+      a.innerText = text;
+      div.innerText = '';
+      div.appendChild(a);
+    }
+
+    canvas.appendChild(div);
+    const rect = canvas.getBoundingClientRect();
+    let x=20, y=20;
+
+    if(downMatch && items[downMatch[1]]){
+      const prev = items[downMatch[1]];
+      y = prev.offsetTop + prev.offsetHeight + 10;
+      x = prev.offsetLeft;
+    }
+    if(rightMatch && items[rightMatch[1]]){
+      const prev = items[rightMatch[1]];
+      x = prev.offsetLeft + prev.offsetWidth + 10;
+      y = prev.offsetTop;
+    }
+
+    div.style.left = x + 'px';
+    div.style.top = y + 'px';
+    items[id] = div;
+  });
+});
+</script>
+
+</body>
+</html>
